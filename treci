@@ -1,0 +1,65 @@
+i=5;j=1;
+p=[0.8*i -0.7*i -0.9*i -0.8*i -1*i -1.2*i 0.9*i -0.7*i 0.8*i 0.2*i];
+t=[-0.8*j -1.2*j 1.1*j -0.2*j 0.6*j 0*j -0.4*j -1.1*j -0.5*j 0.4*j];
+z=[p; ones(1,10)];
+R=(z*z')/10
+h=(z*t')/10;
+c=mean(t.^2)
+xop=inv(R)*h
+x=[-5:0.1:5];
+[x1,x2]=meshgrid(x,x);
+F=R(1,1)*x1.^2+R(2,2)*x2.^2+2*R(1,2)*x1.*x2-2*h(1)*x1-2*h(2)*x2+c;
+figure(1)
+contour(x1,x2,F)
+xlabel('w');
+ylabel('b');
+x1=[-4;-4];
+x2=[-4;-4];
+T=500;
+z1=repmat(z,1,T/10);
+t1=repmat(t,1,T/10);
+for n=1:T
+e1(n)=t1(n)-x1(:,n)'*z1(:,n);
+x1(:,n+1)=x1(:,n)+0.01*e1(n)*z1(:,n);
+x2(:,n+1)=x2(:,n)+0.03*[h-R*x2(:,n)];
+f1(n)=c-x1(:,n)'*h + 0.5*x1(:,n)'*R*x1(:,n);
+f2(n)=c-x2(:,n)'*h + 0.5*x2(:,n)'*R*x2(:,n);
+end
+hold on
+xonlinea=x1(:,end)
+xofflinea=x2(:,end)
+g1=plot(x1(1,:),x1(2,:),'r');
+g2=plot(x2(1,:),x2(2,:),'b');
+g3=plot(xop(1),xop(2),'x','linewidth',1);
+legend([g1 g2 g3],'LMS(alpha=0.01)','SD(alpha=0.03)')
+axis([-5 5 -5 5]);
+figure
+plot(0:499,f1,0:499,f2);
+legend('LMS','SD')
+xlabel('broj iteracija')
+ylabel('F(x(n))')
+f=1/2*c-xop'*h+1/2*xop'*R*xop;
+ net1=linearlayer;
+net1 = configure(net1,p,t);
+%% online treniranje
+T=500;
+net1.inputWeights{1,1}.learnParam.lr = 0.01;
+net1.biases{1,1}.learnParam.lr = 0.01;
+net1.IW{1,1} = -2;
+net1.b{1} = -2;
+p1=repmat(p,1,T/10); % prosirujemo podatke T/10 puta, da bi prosli LMSom
+%kroz njih
+for n=1:T
+[net1,y,e]=adapt(net1,p1(n),t1(n));
+end
+%% offline treniranje
+net2=linearlayer;
+net2 = configure(net2,p,t);
+net2.IW{1,1} = -0.13246;
+net2.b{1} =-0.54846;
+net2.inputWeights{1,1}.learnParam.lr = 0.02;
+net2.biases{1,1}.learnParam.lr = 0.02;
+[net2 tr]=train(net2,p,t)
+%%
+xonline=[net1.IW{1,1};net1.b{1}]
+xoffline=[net2.IW{1,1};net2.b{1}]
