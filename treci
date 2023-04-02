@@ -55,10 +55,10 @@ end
 %% offline treniranje
 net2=linearlayer;
 net2 = configure(net2,p,t);
-net2.IW{1,1} = -0.13246;
-net2.b{1} =-0.54846;
-net2.inputWeights{1,1}.learnParam.lr = 0.02;
-net2.biases{1,1}.learnParam.lr = 0.02;
+net2.IW{1,1} = -0.1325;
+net2.b{1} =-0.5485;
+net2.inputWeights{1,1}.learnParam.lr = 0.03;
+net2.biases{1,1}.learnParam.lr = 0.03;
 [net2 tr]=train(net2,p,t)
 %%
 xonline=[net1.IW{1,1};net1.b{1}]
